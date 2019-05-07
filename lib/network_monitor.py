@@ -20,11 +20,11 @@ def measure_network(state):
 
 
 def initialize_network_monitor(state):
-    out = cmd('nmcli device status').split('\n')
-    for line in out[1:]:
-        sp = line.split()
-        if sp[1]=='ethernet':
-            state['interface_name'] = sp[0]
+    out = cmd('ls -al /sys/class/net/').split('\n')
+    for line in out[3:]:
+        if 'virtual' not in line:
+            sp = line.split()
+            state['interface_name'] = sp[8]
             break
     state['total_ingress'] = 0
     state['total_egress'] = 0

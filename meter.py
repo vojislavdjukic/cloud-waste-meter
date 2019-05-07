@@ -2,12 +2,18 @@ from __future__ import print_function
 
 import os
 from time import sleep
+from argparse import ArgumentParser
+
 from lib.util import cmd
 from lib.cpu_monitor import measure_cpu, initialize_cpu_monitor
 from lib.memory_monitor import measure_memory, initialize_memory_monitor
 from lib.network_monitor import measure_network, initialize_network_monitor
 
 state = {}
+
+parser = ArgumentParser()
+parser.add_argument("-f", "--frequency", type=float, default=1.0,
+    help='Frequency of measurements')
 
 
 def init_state():
@@ -17,6 +23,8 @@ def init_state():
 
 
 def main():
+    args = parser.parse_args()
+
     init_state()
 
     while True:
@@ -25,7 +33,7 @@ def main():
         ing, eg = measure_network(state)
         print('CPU: ', cpu, 'Memory:', mem)
         print('Ingress: ', ing, 'Egress:', eg)
-        sleep(1)    
+        sleep(args.frequency)
 
 
 if __name__ == '__main__':
