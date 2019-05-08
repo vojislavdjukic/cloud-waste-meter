@@ -41,3 +41,5 @@ def initialize_cpu_monitor(state):
     state['cpu'] = (None, None)
     measure_cpu(state)
     state['cpu_total'] = int(cmd("cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l").strip())
+    cpu_type = cmd("cat /proc/cpuinfo | awk '/^model name/{print; exit}'")
+    state['cpu_type'] = cpu_type.split(":")[1].strip()
