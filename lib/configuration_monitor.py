@@ -22,10 +22,7 @@ def get_new_configuration():
 def initialize_configuration_monitor(state):
     home_dir = os.path.expanduser(state['params']['home_dir'])
     config_file_path = home_dir + 'machine_config.log'
-    config_file = open(config_file_path)
-    #columns = 'time,cpu_count,cpu_type,memory_total,comment\n'
-    lines = config_file.readlines()
-    config_file.close()
+    lines = state['old_configuration']
 
     #if there are previous configurations
     if len(lines)>1:

@@ -23,6 +23,11 @@ def initialize_output_writer(state):
                 columns = 'time,cpu_count,cpu_type,memory_total,comment\n'
             file.write(columns)
             file.close()
+
+        if f == 'machine_config':
+            config_file = open(f_path)
+            state['old_configuration'] = config_file.readlines()
+            config_file.close()
         state[f] = open(f_path, 'a')
 
 def write_configuration(state, time, cpu_type, cpu_count, mem_total, comment):
