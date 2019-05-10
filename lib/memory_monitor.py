@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from util import cmd
+from .util import cmd
 
 
 def measure_memory(state):
@@ -12,6 +12,4 @@ def measure_memory(state):
 
 
 def initialize_memory_monitor(state):
-    out = cmd('cat /proc/meminfo')
-    out = out.split()
-    state['mem_total'] = float(out[1])
+    pass

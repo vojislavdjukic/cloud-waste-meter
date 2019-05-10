@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from util import cmd
+from .util import cmd
 
 
 def parse_cpu(stat_out, old_measurements):
@@ -40,6 +40,4 @@ def measure_cpu(state):
 def initialize_cpu_monitor(state):
     state['cpu'] = (None, None)
     measure_cpu(state)
-    state['cpu_total'] = int(cmd("cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l").strip())
-    cpu_type = cmd("cat /proc/cpuinfo | awk '/^model name/{print; exit}'")
-    state['cpu_type'] = cpu_type.split(":")[1].strip()
+    

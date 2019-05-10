@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from util import cmd
+from .util import cmd
 
 
 def measure_network(state):
