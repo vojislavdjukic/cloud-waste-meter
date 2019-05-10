@@ -14,7 +14,7 @@ def fetch_instance_type(state):
             from urllib2 import urlopen
         else:
             from urllib.request import urlopen
-        output = urlopen(state['params']['machine_type_url'], timeout = 1).read()
+        output = urlopen(state['params']['machine_type_url'], timeout = 1).read().decode('utf-8')
         instance_type = re.search(r'"instanceType" : "(.+)"', output).group(1)
         region = re.search(r'"region" : "(.+)"', output).group(1)
         return instance_type, region
