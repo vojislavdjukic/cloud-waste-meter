@@ -27,11 +27,14 @@ parser.add_argument('-ol', '--overwrite-logs', action='store_true',
 parser.add_argument('-ff', '--flush-frequency', type=float, default=5.0,
     help='Flush frequency in seconds - how often to persist measurements on disk')
 
+
 def store_params(args):
     state['params']['frequency'] = args.frequency
     state['params']['home_dir'] = args.home_dir
     state['params']['overwrite_logs'] = args.overwrite_logs
     state['params']['flush_frequency'] = args.flush_frequency
+    state['params']['machine_type_url'] = 'http://169.254.169.254/latest/dynamic/instance-identity/document'
+
 
 def init_state():
     initialize_output_writer(state)

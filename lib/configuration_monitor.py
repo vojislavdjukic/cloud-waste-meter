@@ -8,30 +8,19 @@ import re
 from .util import cmd
 from .output_writer import write_configuration
 
+def fetch_instance_type(state):
+    try:
+        if sys.version_info[0] < 3:
+            from urllib2 import urlopen
+        else:
+            from urllib.request import urlopen
+        output = urlopen(state['params']['machine_type_url'], timeout = 1).read()
+        instance_type = re.search(r'"instanceType" : "(.+)"', output).group(1)
+        region = re.search(r'"region" : "(.+)"', output).group(1)
+        return instance_type, region
+    except:
+        return None, None
 
-machine_type_url = 'http://169.254.169.254/latest/dynamic/instance-identity/document'
-
-#python 2 vs python 3 http request
-if sys.version_info[0] < 3:
-    def fetch_instance_type():
-        try:
-            import urllib2
-            output = urllib2.urlopen(machine_type_url, timeout = 1).read()
-            instance_type = re.search(r'"instanceType" : "(.+)"', output).group(1)
-            region = re.search(r'"region" : "(.+)"', output).group(1)
-            return instance_type, region
-        except:
-            return None, None
-else:
-    def fetch_instance_type():
-        try:
-            import urllib.request
-            output = urllib.request.urlopen(machine_type_url).read()
-            instance_type = re.search(r'"instanceType" : "(.+)"', output).group(1)
-            region = re.search(r'"region" : "(.+)"', output).group(1)
-            return instance_type, region
-        except:
-            return None, None
 
 def get_new_configuration():
     #CPU information - number of cores and CPU type
@@ -61,7 +50,7 @@ def initialize_configuration_monitor(state):
     #get new configuration and see if there are any differences
     cpu_count, mem_total, cpu_type = get_new_configuration()
 
-    instance_type, region = fetch_instance_type()
+    instance_type, region = fetch_instance_type(state)
     if instance_type is None:
         instance_type = 'unknown'
         region = 'unknown'
