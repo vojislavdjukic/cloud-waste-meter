@@ -16,7 +16,6 @@ from lib.network_monitor import measure_network, initialize_network_monitor
 state = {}
 state['params'] = {}
 
-# http://169.254.169.254/latest/meta-data/instance-type
 
 parser = ArgumentParser()
 parser.add_argument('-f', '--frequency', type=float, default=1.0,

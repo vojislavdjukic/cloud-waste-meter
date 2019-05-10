@@ -20,7 +20,7 @@ def initialize_output_writer(state):
             if f == 'trace':
                 columns = 'time,cpu,memory,ingress,egress\n'
             else:
-                columns = 'time,cpu_count,cpu_type,memory_total,comment\n'
+                columns = 'time,cpu_count,memory_total,cpu_type,instance_type,comment\n'
             file.write(columns)
             file.close()
 
@@ -30,8 +30,8 @@ def initialize_output_writer(state):
             config_file.close()
         state[f] = open(f_path, 'a')
 
-def write_configuration(state, time, cpu_type, cpu_count, mem_total, comment):
-    line = '%d,%s,%d,%d,%s\n'%(time, cpu_type, cpu_count, mem_total, comment)
+def write_configuration(state, time, cpu_count, mem_total, cpu_type, instance_type, comment):
+    line = '%d,%d,%d,%s,%s,%s\n'%(time, cpu_count, mem_total, cpu_type, instance_type, comment)
     state['machine_config'].write(line)
     state['machine_config'].flush()
 

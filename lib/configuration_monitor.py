@@ -2,11 +2,30 @@ from __future__ import print_function
 
 import os
 import time
+import sys
 
 from .util import cmd
 from .output_writer import write_configuration
 
-#'time,cpu_count,cpu_type,memory_total,comment\n'
+
+machine_type_url = 'http://169.254.169.254/latest/meta-data/instance-type'
+
+#python 2 vs python 3 http request
+if sys.version_info[0] < 3:
+    def fetch_instance_type():
+        try:
+            import urllib2
+            return urllib2.urlopen(machine_type_url, timeout = 1).read()
+        except:
+            return None
+else:
+    def fetch_instance_type():
+        try:
+            import urllib.request
+            return urllib.request.urlopen(machine_type_url).read()
+        except:
+            return None
+
 def get_new_configuration():
     #CPU information - number of cores and CPU type
     cpu_count = int(cmd("cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l").strip())
@@ -17,7 +36,8 @@ def get_new_configuration():
     out = out.split()
     mem_total = int(out[1])
 
-    return (cpu_type, cpu_count, mem_total)
+    return (cpu_count, mem_total, cpu_type)
+
 
 def initialize_configuration_monitor(state):
     home_dir = os.path.expanduser(state['params']['home_dir'])
@@ -27,29 +47,34 @@ def initialize_configuration_monitor(state):
     #if there are previous configurations
     if len(lines)>1:
         split = lines[-1][:-1].split(',')
-        old_cpu_type = split[1]
-        old_cpu_count = int(split[2])
-        old_mem_total = int(split[3])
+        old_config = (int(split[1]), int(split[2]), split[3], split[4])
     else:
-        old_cpu_type = 0
-        old_cpu_count = 0
-        old_mem_total = 0
+        old_config = (0, 0, 0, '')
 
     #get new configuration and see if there are any differences
-    cpu_type, cpu_count, mem_total = get_new_configuration()
-    if cpu_type != old_cpu_type or cpu_count != old_cpu_count or mem_total != old_mem_total:
+    cpu_count, mem_total, cpu_type = get_new_configuration()
+
+    instance_type = fetch_instance_type()
+    if instance_type is None:
+        instance_type = 'unknown'
+    
+    new_config = (cpu_count, mem_total, cpu_type, instance_type)
+    
+    if old_config != new_config:
         t = int(round(time.time() * 1000))
-        write_configuration(state, t, cpu_type, cpu_count, mem_total, '')
+        write_configuration(state, t, cpu_count, mem_total, cpu_type, instance_type, '')
 
     state['cpu_type'] = cpu_type
     state['cpu_count'] = cpu_count
     state['mem_total'] = mem_total
+    state['instance_type'] = instance_type
+
 
 def update_machine_configuration(state, timestamp):
     old_cpu_type = state['cpu_type']
     old_cpu_count = state['cpu_count']
     old_mem_total = state['mem_total']
-    cpu_type, cpu_count, mem_total = get_new_configuration()
+    cpu_count, mem_total, cpu_type = get_new_configuration()
     if cpu_type != old_cpu_type or cpu_count != old_cpu_count or mem_total != old_mem_total:
-        write_configuration(state, timestamp, cpu_type, cpu_count, mem_total, '')
+        write_configuration(state, timestamp, cpu_type, cpu_count, mem_total, state['instance_type'], '')
     
