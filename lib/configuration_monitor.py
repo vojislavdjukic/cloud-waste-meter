@@ -3,28 +3,35 @@ from __future__ import print_function
 import os
 import time
 import sys
+import re
 
 from .util import cmd
 from .output_writer import write_configuration
 
 
-machine_type_url = 'http://169.254.169.254/latest/meta-data/instance-type'
+machine_type_url = 'http://169.254.169.254/latest/dynamic/instance-identity/document'
 
 #python 2 vs python 3 http request
 if sys.version_info[0] < 3:
     def fetch_instance_type():
         try:
             import urllib2
-            return urllib2.urlopen(machine_type_url, timeout = 1).read()
+            output = urllib2.urlopen(machine_type_url, timeout = 1).read()
+            instance_type = re.search(r'"instanceType" : "(.+)"', output).group(1)
+            region = re.search(r'"region" : "(.+)"', output).group(1)
+            return instance_type, region
         except:
-            return None
+            return None, None
 else:
     def fetch_instance_type():
         try:
             import urllib.request
-            return urllib.request.urlopen(machine_type_url).read()
+            output = urllib.request.urlopen(machine_type_url).read()
+            instance_type = re.search(r'"instanceType" : "(.+)"', output).group(1)
+            region = re.search(r'"region" : "(.+)"', output).group(1)
+            return instance_type, region
         except:
-            return None
+            return None, None
 
 def get_new_configuration():
     #CPU information - number of cores and CPU type
@@ -54,20 +61,22 @@ def initialize_configuration_monitor(state):
     #get new configuration and see if there are any differences
     cpu_count, mem_total, cpu_type = get_new_configuration()
 
-    instance_type = fetch_instance_type()
+    instance_type, region = fetch_instance_type()
     if instance_type is None:
         instance_type = 'unknown'
+        region = 'unknown'
     
     new_config = (cpu_count, mem_total, cpu_type, instance_type)
     
     if old_config != new_config:
         t = int(round(time.time() * 1000))
-        write_configuration(state, t, cpu_count, mem_total, cpu_type, instance_type, '')
+        write_configuration(state, t, cpu_count, mem_total, cpu_type, instance_type, region, '')
 
     state['cpu_type'] = cpu_type
     state['cpu_count'] = cpu_count
     state['mem_total'] = mem_total
     state['instance_type'] = instance_type
+    state['region'] = region
 
 
 def update_machine_configuration(state, timestamp):
