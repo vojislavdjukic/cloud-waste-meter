@@ -4,4 +4,7 @@ import os
 
 
 def cmd(command):
-    return subprocess.check_output(command, shell=True).decode('utf-8')
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    stdout_value = p.communicate()[0].decode('utf-8')
+    return stdout_value   # the output
+    #return subprocess.check_output(command, shell=True).decode('utf-8')
