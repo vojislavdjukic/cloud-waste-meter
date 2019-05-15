@@ -9,6 +9,8 @@ from json import encoder
 encoder.FLOAT_REPR = lambda o: format(o, '.5f')
 
 aws_data_path = out = os.path.join(os.path.dirname(os.path.abspath(__file__)),os.pardir,'data','aws_data.json')
+aws_url = 'https://a0.p.awsstatic.com/pricing/1.0/ec2/region/%s/ondemand/linux/index.json'
+
 
 def cmd(command):
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
@@ -17,8 +19,6 @@ def cmd(command):
     #return subprocess.check_output(command, shell=True).decode('utf-8')
 
 def prepare_aws_pricing():
-    r = requests.get('https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json')
-    r = r.json()
     region_mapping = {
         "US East (Ohio)": "us-east-2",
         "US East (N. Virginia)": "us-east-1",
@@ -31,8 +31,8 @@ def prepare_aws_pricing():
         "Asia Pacific (Sydney)": "ap-southeast-2",
         "Asia Pacific (Tokyo)": "ap-northeast-1",
         "Canada (Central)": "ca-central-1",
-        "China (Beijing)": "cn-north-1",
-        "China (Ningxia)": "cn-northwest-1",
+        #"China (Beijing)": "cn-north-1",
+        #"China (Ningxia)": "cn-northwest-1",
         "EU (Frankfurt)": "eu-central-1",
         "EU (Ireland)": "eu-west-1",
         "EU (London)": "eu-west-2",
@@ -43,69 +43,45 @@ def prepare_aws_pricing():
         "AWS GovCloud (US)": "us-gov-west-1"    
     }
 
-    print('Downlaoad finished')
     result = {}
-    for i in region_mapping:
-        result[region_mapping[i]] = {}
+    for region in region_mapping.values():
+        print("Downloading the region: %s"%region)
+        r = requests.get(aws_url%region)
+        r = r.json()
+        result[region] = {}
 
-    for product in r['products']:
-        attributes = r['products'][product]['attributes']
-        if 'instanceType' not in attributes or attributes['location'] not in region_mapping \
-        or not attributes['operatingSystem'] == 'Linux':
-            continue
-        region = region_mapping[attributes['location']]
-        instance_type = attributes['instanceType']
-        memory = attributes['memory']
-        if ' GiB' in memory:
-            memory = memory.replace(' GiB', '')
-        if ',' in memory:
-            memory = memory.replace(',', '')
-        if memory == 'NA':
-            continue
-        memory = float(memory)
-        cpu = float(attributes['vcpu'])
-        
-        network = attributes['networkPerformance'].replace(' Gigabit', '')
-        if 'Low' in network:
-            network = '1'
-        elif 'Moderate' in network:
-            network = '2'
-        elif 'High' in network:
-            network = '3'
-        if 'Up to ' in network:
-            network = network.replace('Up to ', '')
-        if network == 'NA':
-            continue
-        network = float(network)
-
-        if product not in r['terms']['OnDemand']:
-            continue
-        prices = r['terms']['OnDemand'][product].values()
-
-
-        pp = []
-        for price in prices:
-            t = price['priceDimensions'].values()
-            for x in t:
-                pp.append(float(x['pricePerUnit']['USD']))
-        
-        cost = max(pp)
-        
-        if instance_type == "t3.nano" and region == 'ap-east-1':
-            print(region, pp)
-            print(attributes)
-
-        if instance_type in result[region]:
-            result[region][instance_type]['cost'] = max(result[region][instance_type]['cost'], cost)
-        else:
+        for instance in r['prices']:
+            attributes = instance['attributes']
+            instance_type = attributes['aws:ec2:instanceType']
+            memory = attributes['aws:ec2:memory']
+            if ' GiB' in memory:
+                memory = memory.replace(' GiB', '')
+            if ',' in memory:
+                memory = memory.replace(',', '')
+            if memory == 'NA':
+                continue
+            memory = float(memory)
+            cpu = float(attributes['aws:ec2:vcpu'])
+            
+            network = attributes['aws:ec2:networkPerformance'].replace(' Gigabit', '')
+            if 'Low' in network:
+                network = '1'
+            elif 'Moderate' in network:
+                network = '2'
+            elif 'High' in network:
+                network = '3'
+            if 'Up to ' in network:
+                network = network.replace('Up to ', '')
+            if network == 'NA':
+                continue
+            network = float(network)
+            cost = float(instance['price']['USD'])
             result[region][instance_type] = {
                 'cpu': cpu,
                 'memory': memory,
                 'network': network,
                 'cost': cost   
             }
-
-    print('Conversion finished')
     
     with open(aws_data_path, 'w') as outfile:  
         json.dump(result, outfile, indent=4, sort_keys=True)
