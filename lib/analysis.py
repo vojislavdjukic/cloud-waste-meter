@@ -48,14 +48,21 @@ def create_report(step, trace_path, machine_config_path):
 
     res = find_configurations(time_start, time_end, machine_config_df)
     
+    pricing = load_aws_pricing()
+
     #calculate the cost of execution
     for r in res:
-        execution_time = r[1]-r[0]
-        instance_type = r[2]['instance_type']
-        region = r[2]['region']
-        print(execution_time, instance_type)
+        print(r)
+        execution_time = (r[1]-r[0])/1000. #in seconds
+        instance_type = r[2].at[0, 'instance_type']
+        region = r[2].at[0, 'region']
+        mt = pricing[region][instance_type]
+        print(mt)
+        print(execution_time/3600.)
+        print('Total execution cost is %.2f$'%(mt['cost']*execution_time/3600.))
 
-    load_aws_pricing()
+
+    
 
 
 
