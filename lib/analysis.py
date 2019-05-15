@@ -2,6 +2,9 @@ from __future__ import print_function
 
 import os
 import pandas as pd
+import requests
+
+from .util import load_aws_pricing
 
 def find_configuration(timestamp, configurations):
     number_of_configurations = len(configurations.index)
@@ -44,4 +47,16 @@ def create_report(step, trace_path, machine_config_path):
     time_end = trace_df.at[number_of_logs-1, 'time']
 
     res = find_configurations(time_start, time_end, machine_config_df)
-    print(res)
+    
+    #calculate the cost of execution
+    for r in res:
+        execution_time = r[1]-r[0]
+        instance_type = r[2]['instance_type']
+        region = r[2]['region']
+        print(execution_time, instance_type)
+
+    load_aws_pricing()
+
+
+
+    
