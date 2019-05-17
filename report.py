@@ -36,6 +36,8 @@ def store_params(args):
     state['params']['overwrite_logs'] = args.overwrite_logs
     state['params']['step'] = args.step
 
+    state['params']['plot'] = True
+
 
 def init_state():
     initialize_report_writer(state)
@@ -52,7 +54,7 @@ def main():
     store_params(args)
     init_state()
 
-    create_report(state['params']['step'], state['params']['trace_file'], state['params']['machine_config_file'])
+    create_report(state)
 
 
 if __name__ == '__main__':
