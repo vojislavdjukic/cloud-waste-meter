@@ -22,8 +22,8 @@ def measure_network(state):
 def initialize_network_monitor(state):
     out = cmd('ls -al /sys/class/net/').split('\n')
     for line in out[3:]:
-        if 'virtual' not in line:
-            sp = line.split()
+        sp = line.split()
+        if 'docker' not in sp[8] and sp[8] != 'lo':
             state['interface_name'] = sp[8]
             break
     state['total_ingress'] = 0
